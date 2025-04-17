@@ -1,132 +1,137 @@
-import React, { useState } from 'react';
-import DraggableComponents from './DraggableComponents';
+import React, { useState, useEffect } from 'react';
+import DroppedComponent from './DroppedComponent';
+import { Rnd } from 'react-rnd';
+import '../App.css';
 
-const Canvas = ({ components, onDrop, onDelete, onUpdate, onClear, onSave }) => {
-  const [showModal, setShowModal] = useState(false);
-  const [templateName, setTemplateName] = useState('');
+export default function Canvas({ components, onDrop, onComponentClick, setComponents }) {
+    const [text, setText] = useState('');
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const data = e.dataTransfer.getData('componentType');
-    if (data) {
-      try {
-        const { type, props } = JSON.parse(data);
-        onDrop(type, props);
-      } catch {
-        onDrop(data);
-      }
-    }
-  };
+    useEffect(() => {
+        const savedText = localStorage.getItem('canvasText');
+        const savedComponents = localStorage.getItem('canvasComponents');
 
-  const handleDragOver = (e) => e.preventDefault();
+        if (savedText) setText(savedText);
+        if (savedComponents) {
+            const parsedComponents = JSON.parse(savedComponents);
+            setComponents((prevComponents) => [...prevComponents, ...parsedComponents]);
+        }
+    }, [setComponents]);
 
-  const handleSave = () => {
-    setShowModal(true);
-  };
+    useEffect(() => {
+        localStorage.setItem('canvasText', text);
+        localStorage.setItem('canvasComponents', JSON.stringify(components));
+    }, [text, components]);
 
-  const handleConfirmSave = () => {
-    // Save components to localStorage
-    const saved = JSON.parse(localStorage.getItem('savedTemplates')) || [];
-    const newTemplate = {
-      name: templateName || `Template ${saved.length + 1}`,
-      type: 'Group',
-      props: { components },
+    const handleClear = () => {
+        setText('');
+        setComponents([]);
+        localStorage.removeItem('canvasText');
+        localStorage.removeItem('canvasComponents');
     };
 
-    // Save the new template and update localStorage
-    localStorage.setItem('savedTemplates', JSON.stringify([...saved, newTemplate]));
-    
-    // Remove the components from the canvas after saving
-    onSave(newTemplate);
+    const handleDragStop = (index, e, data) => {
+        const updatedComponents = [...components];
+        updatedComponents[index] = {
+            ...updatedComponents[index],
+            x: data.x,
+            y: data.y,
+        };
+        setComponents(updatedComponents);
+    };
 
-    setShowModal(false);
-    setTemplateName('');
-  };
+    const handleResizeStop = (index, e, direction, ref, delta, position) => {
+        const updatedComponents = [...components];
+        updatedComponents[index] = {
+            ...updatedComponents[index],
+            width: ref.offsetWidth + 'px',
+            height: ref.offsetHeight + 'px',
+            x: position.x,
+            y: position.y,
+        };
+        setComponents(updatedComponents);
+    };
 
-  const handleCancel = () => {
-    onClear(); // Clear canvas
-  };
+    useEffect(() => {
+        const handleResize = () => {
+            setComponents((prevComponents) =>
+                prevComponents.map((component) => ({
+                    ...component,
+                    x: Math.min(component.x, window.innerWidth - parseInt(component.width || '150px', 10)),
+                    y: Math.min(component.y, window.innerHeight - parseInt(component.height || '40px', 10)),
+                }))
+            );
+        };
 
-  return (
-    <main
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      className="flex-1 overflow-auto p-10 bg-gradient-to-br from-white to-gray-50"
-    >
-      <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-700 mb-6">🖼️ Canvas</h2>
-        <div className="min-h-[500px] bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 shadow-md transition hover:border-blue-400">
-          <div className="relative bg-gray-100 p-4 rounded-lg border border-gray-300">
-            {components.length === 0 ? (
-              <p className="text-gray-400 text-center pt-24 text-lg">
-                Drag components here to build your UI
-              </p>
-            ) : (
-              components.map((component) => (
-                <DraggableComponents
-                  key={component.id}
-                  id={component.id}
-                  type={component.type}
-                  content={component.content}
-                  style={component.style}
-                  onDelete={onDelete}
-                  onUpdate={onUpdate}
-                />
-              ))
-            )}
-          </div>
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [setComponents]);
 
-          <div className="flex justify-end mt-4">
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg mr-2 hover:bg-blue-600"
-              onClick={handleSave}
+    return (
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50 dark:bg-gray-50 transition-all duration-300">
+            <div
+                onDrop={onDrop}
+                onDragOver={(e) => e.preventDefault()}
+                id="canvas"
+                className="relative w-full min-h-[80vh] border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6 bg-white shadow-md transition-all duration-300"
             >
-              Save
-            </button>
-            <button
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg md:text-xl font-semibold text-gray-700">Drop Components Below</h2>
+                    <button
+                        onClick={handleClear}
+                        className="px-4 py-2 text-sm md:text-base bg-red-500 hover:bg-red-600 text-white rounded-md shadow transition"
+                    >
+                        Clear
+                    </button>
+                </div>
 
-      {/* Save Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[300px]">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Save Template</h3>
-            <input
-              type="text"
-              placeholder="Enter template name"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded mb-4"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300"
-                onClick={() => {
-                  setShowModal(false);
-                  setTemplateName('');
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                onClick={handleConfirmSave}
-              >
-                Save
-              </button>
+                {components.map((component, index) => (
+                    <Rnd
+                        key={index}
+                        size={{
+                            width: component.width || '150px',
+                            height: component.height || '40px',
+                        }}
+                        position={{
+                            x: component.x || 0,
+                            y: component.y || 0,
+                        }}
+                        onDragStop={(e, data) => handleDragStop(index, e, data)}
+                        onResizeStop={(e, direction, ref, delta, position) =>
+                            handleResizeStop(index, e, direction, ref, delta, position)
+                        }
+                        bounds="parent"
+                        enableResizing={{
+                            top: true,
+                            right: true,
+                            bottom: true,
+                            left: true,
+                            topRight: true,
+                            bottomRight: true,
+                            bottomLeft: true,
+                            topLeft: true,
+                        }}
+                        className="rounded shadow-lg border border-gray-300 bg-white hover:ring-2 ring-blue-400 focus-within:ring-2 transition-all duration-200"
+                    >
+                        <div
+                            onClick={() => onComponentClick(index)}
+                            className="w-full h-full flex items-center justify-center cursor-pointer"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                            }}
+                        >
+                            <DroppedComponent
+                                type={component.type}
+                                props={{
+                                    ...component.props,
+                                    width: component.width,
+                                    height: component.height,
+                                }}
+                            />
+                        </div>
+                    </Rnd>
+                ))}
             </div>
-          </div>
         </div>
-      )}
-    </main>
-  );
-};
-
-export default Canvas;
+    );
+}
