@@ -2,16 +2,20 @@ import React from 'react';
 import '../App.css';
 
 export default function RightSidebar({ component, onChange, onSave }) {
-    if (!component) return (
-        <div className="w-72 bg-gray-50 dark:bg-gray-800 p-6 border-l border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 shadow-lg">
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 italic">
-                Select a component to edit
-            </p>
-        </div>
-    );
+    // If no component is selected, show a placeholder message
+    if (!component) {
+        return (
+            <div className="w-72 bg-gray-50 dark:bg-gray-800 p-6 border-l border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 shadow-lg">
+                <p className="text-center text-sm text-gray-500 dark:text-gray-400 italic">
+                    Select a component to edit
+                </p>
+            </div>
+        );
+    }
 
     const { type, props } = component;
 
+    // Reset styles to default values
     const resetStyles = () => {
         onChange({
             backgroundColor: '#ffffff',
@@ -30,12 +34,13 @@ export default function RightSidebar({ component, onChange, onSave }) {
 
     return (
         <div className="w-72 bg-white dark:bg-gray-800 p-6 border-l border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 shadow-lg">
+            {/* Header displaying the type of component being edited */}
             <h3 className="text-xl font-semibold mb-6 text-center border-b pb-2">
                 Edit {type}
             </h3>
 
             <div className="space-y-4">
-                {/* Background Color */}
+                {/* Background Color Input */}
                 <label className="block text-sm font-medium">
                     Background Color
                     <input
@@ -46,7 +51,7 @@ export default function RightSidebar({ component, onChange, onSave }) {
                     />
                 </label>
 
-                {/* Text Color */}
+                {/* Text Color Input */}
                 <label className="block text-sm font-medium">
                     Text Color
                     <input
@@ -57,21 +62,22 @@ export default function RightSidebar({ component, onChange, onSave }) {
                     />
                 </label>
 
-                {/* Font Size */}
+                {/* Font Size Input */}
                 <label className="block text-sm font-medium">
                     Font Size (px)
                     <input
                         type="number"
-                        value={props.fontSize?.replace('px', '') || 16}
+                        value={parseInt(props.fontSize) || 16}
                         onChange={(e) => onChange({ fontSize: `${e.target.value}px` })}
                         className="w-full mt-1 border rounded px-2 py-1 hover:shadow focus:ring focus:ring-blue-300"
                     />
                 </label>
 
-                {/* Font Style */}
+                {/* Font Style Controls */}
                 <div className="block text-sm font-medium">
                     Font Style
                     <div className="flex items-center space-x-4 mt-1">
+                        {/* Bold Toggle */}
                         <label className="flex items-center space-x-1">
                             <input
                                 type="checkbox"
@@ -83,6 +89,7 @@ export default function RightSidebar({ component, onChange, onSave }) {
                             />
                             <span>Bold</span>
                         </label>
+                        {/* Italic Toggle */}
                         <label className="flex items-center space-x-1">
                             <input
                                 type="checkbox"
@@ -97,29 +104,29 @@ export default function RightSidebar({ component, onChange, onSave }) {
                     </div>
                 </div>
 
-                {/* Width */}
+                {/* Width Input */}
                 <label className="block text-sm font-medium">
                     Width (px)
                     <input
                         type="number"
-                        value={props.width?.replace('px', '') }
-                        onChange={(e) => onChange({ width: `${e.target.value}px`  })}
+                        value={parseInt(props.width) || ''}
+                        onChange={(e) => onChange({ width: `${e.target.value}px` })}
                         className="w-full mt-1 border rounded px-2 py-1 hover:shadow focus:ring focus:ring-blue-300"
                     />
                 </label>
 
-                {/* Height */}
+                {/* Height Input */}
                 <label className="block text-sm font-medium">
                     Height (px)
                     <input
                         type="number"
-                        value={props.height?.replace('px', '') ||''}
+                        value={parseInt(props.height) || ''}
                         onChange={(e) => onChange({ height: `${e.target.value}px` })}
                         className="w-full mt-1 border rounded px-2 py-1 hover:shadow focus:ring focus:ring-blue-300"
                     />
                 </label>
 
-                {/* Label / Placeholder */}
+                {/* Label / Placeholder Input */}
                 <label className="block text-sm font-medium">
                     Text / Placeholder
                     <input
@@ -132,11 +139,10 @@ export default function RightSidebar({ component, onChange, onSave }) {
                     />
                 </label>
 
-                {/* Editable Dropdown Options */}
+                {/* Dropdown Options Editor */}
                 {type === 'Dropdown' && (
                     <div className="space-y-2">
                         <label className="block text-sm font-medium">Dropdown Options</label>
-
                         {(props.options || []).map((opt, idx) => (
                             <div key={idx} className="flex items-center space-x-2">
                                 <input
@@ -160,7 +166,6 @@ export default function RightSidebar({ component, onChange, onSave }) {
                                 </button>
                             </div>
                         ))}
-
                         <button
                             onClick={() => {
                                 const newOptions = [...(props.options || []), `Option ${props.options?.length + 1 || 1}`];
@@ -182,11 +187,9 @@ export default function RightSidebar({ component, onChange, onSave }) {
                             accept="image/*"
                             onChange={(e) => {
                                 const file = e.target.files[0];
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                    onChange({ image: reader.result });
-                                };
                                 if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => onChange({ image: reader.result });
                                     reader.readAsDataURL(file);
                                 }
                             }}

@@ -26,10 +26,29 @@ export default function App() {
     e.preventDefault();
     const type = e.dataTransfer.getData('componentType');
     const props = JSON.parse(e.dataTransfer.getData('componentProps'));
+  
     if (type) {
-      setComponents((prev) => [...prev, { type, props }]);
+      const verticalSpacing = 20; // space between each component
+      const defaultHeight = 60;   // default height of components
+      const defaultX = 50;        // starting X position
+  
+      setComponents((prev) => {
+        const newY = prev.length * (defaultHeight + verticalSpacing);
+        return [
+          ...prev,
+          {
+            type,
+            props,
+            x: defaultX,
+            y: newY,
+            width: '150px',
+            height: defaultHeight + 'px',
+          },
+        ];
+      });
     }
   };
+  
 
   const handleComponentClick = (index) => {
     setSelectedIndex(index);
