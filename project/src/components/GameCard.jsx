@@ -1,10 +1,15 @@
-export default function GameCard({ title, onClick }) {
-    return (
-        <button 
-            onClick={onClick} 
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-        >
-            {title}
-        </button>
-    );
+function GameCard(key) {
+    const [points, setPoints] = useState({});
+
+    useEffect(() => {
+        const data = JSON.parse(localStorage.getItem(key)) || {};
+        setPoints(data);
+    }, []);
+
+    const updatePoints = (newPoints) => {
+        setPoints(newPoints);
+        localStorage.setItem(key, JSON.stringify(newPoints));
+    };
+
+    return [points, updatePoints];
 }

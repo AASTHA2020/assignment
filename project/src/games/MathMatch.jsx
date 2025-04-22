@@ -1,78 +1,78 @@
-import { useState } from "react";
-import { useGameStore } from "../utils/pointManager";
+// App.jsx
+import { useState, useEffect } from "react";
 
-const cardsData = [
-    { id: 1, emoji: "🍎", color: "bg-pink-200" },
-    { id: 2, emoji: "🍎", color: "bg-purple-200" },
-    { id: 3, emoji: "🍌", color: "bg-pink-200" },
-    { id: 4, emoji: "🍌", color: "bg-purple-200" },
-    { id: 5, emoji: "🍇", color: "bg-pink-200" },
-    { id: 6, emoji: "🍇", color: "bg-purple-200" },
-];
+const emojis = ['🐸', '🦄', '🐰', '🦖', '🦋', '🦀', '🐬', '🙈'];
 
-export default function MathMatch() {
-    const { addWin } = useGameStore();
-    const [flippedCards, setFlippedCards] = useState([]);
-    const [matchedCards, setMatchedCards] = useState([]);
+const shuffleArray = (arr) => {
+    const array = [...arr, ...arr]; // duplicate emojis for pairs
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+};
 
-    const handleCardClick = (card) => {
-        console.log("Card clicked:", card);
+export default function App() {
+    const [cards, setCards] = useState([]);
+    const [flipped, setFlipped] = useState([]);
+    const [matched, setMatched] = useState([]);
+    const [disableClick, setDisableClick] = useState(false);
 
-        if (flippedCards.length === 2 || matchedCards.includes(card.id)) {
-            console.log("Click ignored. Either two cards are already flipped or the card is already matched.");
-            return;
-        }
+    useEffect(() => {
+        setCards(shuffleArray(emojis));
+    }, []);
 
-        const newFlippedCards = [...flippedCards, card];
-        console.log("Flipped cards:", newFlippedCards);
-        setFlippedCards(newFlippedCards);
+    const handleClick = (index) => {
+        if (disableClick || flipped.includes(index) || matched.includes(index)) return;
 
-        if (newFlippedCards.length === 2) {
-            const [first, second] = newFlippedCards;
-            console.log("Comparing cards:", first, second);
+        const newFlipped = [...flipped, index];
+        setFlipped(newFlipped);
 
-            if (first.emoji === second.emoji) {
-                console.log("Cards matched:", first, second);
-                setMatchedCards((prev) => {
-                    const updatedMatchedCards = [...prev, first.id, second.id];
-                    console.log("Updated matched cards:", updatedMatchedCards);
-                    return updatedMatchedCards;
-                });
-                addWin();
-                console.log("Point added!");
-                alert("Matched! +1 Point!");
-            } else {
-                console.log("Cards did not match.");
+        if (newFlipped.length === 2) {
+            setDisableClick(true);
+            const [first, second] = newFlipped;
+            if (cards[first] === cards[second]) {
+                setMatched([...matched, first, second]);
             }
 
             setTimeout(() => {
-                console.log("Resetting flipped cards.");
-                setFlippedCards([]);
-            }, 1000);
+                setFlipped([]);
+                setDisableClick(false);
+            }, 800);
         }
     };
 
+    const resetGame = () => {
+        setCards(shuffleArray(emojis));
+        setFlipped([]);
+        setMatched([]);
+    };
+
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-yellow-50 p-4">
-            <h2 className="text-2xl font-bold mb-4">Math Match Game</h2>
-            <p className="mb-6">🧠 Match the cards to earn points!</p>
-            <div className="grid grid-cols-3 gap-4">
-                {cardsData.map((card) => (
-                    <div
-                        key={card.id}
-                        className={`w-24 h-32 flex items-center justify-center rounded-lg cursor-pointer ${
-                            flippedCards.includes(card) || matchedCards.includes(card.id)
-                                ? card.color
-                                : "bg-gray-300"
-                        }`}
-                        onClick={() => handleCardClick(card)}
-                    >
-                        {(flippedCards.includes(card) || matchedCards.includes(card.id)) && (
-                            <span className="text-2xl">{card.emoji}</span>
-                        )}
-                    </div>
-                ))}
+        <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+            <h1 className="text-2xl font-bold mb-4">🧠 Match Pair Game</h1>
+            <div className="grid grid-cols-4 gap-4">
+                {cards.map((emoji, index) => {
+                    const isFlipped = flipped.includes(index) || matched.includes(index);
+                    const cardColor = index % 2 === 0 ? 'bg-pink-400' : 'bg-purple-400';
+                    return (
+                        <div
+                            key={index}
+                            onClick={() => handleClick(index)}
+                            className={`w-16 h-16 flex items-center justify-center text-2xl border rounded shadow cursor-pointer
+                                ${isFlipped ? 'bg-white' : `${cardColor} text-white`}`}
+                        >
+                            {isFlipped ? emoji : "?"}
+                        </div>
+                    );
+                })}
             </div>
+            <button
+                onClick={resetGame}
+                className="mt-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+                🔁 Restart
+            </button>
         </div>
     );
 }
