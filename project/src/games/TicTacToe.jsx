@@ -12,7 +12,7 @@ export default function TicTacToe() {
     // Load saved points
     useEffect(() => {
         console.log('📦 Loading points from localStorage...');
-        const savedPoints = JSON.parse(localStorage.getItem('points-tictactoe'));
+        const savedPoints = JSON.parse(localStorage.getItem('points'));
         if (savedPoints) {
             console.log('✅ Loaded points:', savedPoints);
             setPoints(savedPoints);
@@ -22,7 +22,7 @@ export default function TicTacToe() {
     // Save points to localStorage
     useEffect(() => {
         console.log('💾 Saving points to localStorage:', points);
-        localStorage.setItem('points-tictactoe', JSON.stringify(points));
+        localStorage.setItem('points', JSON.stringify(points));
     }, [points]);
 
     const handleClick = (index) => {
