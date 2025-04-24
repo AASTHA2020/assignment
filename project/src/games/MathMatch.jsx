@@ -1,72 +1,64 @@
 import { useState, useEffect } from "react";
+
 const MemoryGame = () => {
-  console.log("Component MemoryGame initialized");
-  const emojis1 = ["😊", "❤️", "🎉", "🌟"];
-  console.log("emojis1 initialized:", emojis1);
-  const emojis2 = ["😊", "❤️", "🎉", "🌟"];
-  console.log("emojis2 initialized:", emojis2);
+  const emojis = ["😊", "❤️", "🎉", "🌟"];
+  const [cards, setCards] = useState([]);
+  const [flipped, setFlipped] = useState([]);
+  const [matchedPairs, setMatchedPairs] = useState(0);
 
-  const getRandomEmoji = (emojiArray) => {
-    console.log("getRandomEmoji called with:", emojiArray);
-    return emojiArray[Math.floor(Math.random() * emojiArray.length)];
-  };
-
+  // Shuffle emojis and set up the game
   const initializeGame = () => {
-    console.log("initializeGame called");
-    const allEmojis = [...emojis1, ...emojis2].sort(() => Math.random() - 0.5);
-    console.log("All emojis shuffled:", allEmojis);
-    setCards(allEmojis.map((emoji, id) => ({ id, emoji, flipped: false, matched: false })));
+    const allEmojis = [...emojis, ...emojis]; // duplicate emojis
+    // shuffle the array
+    for (let i = allEmojis.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allEmojis[i], allEmojis[j]] = [allEmojis[j], allEmojis[i]];
+    }
+
+    // create card objects
+    const cardObjects = allEmojis.map((emoji, index) => ({
+      id: index,
+      emoji: emoji,
+      matched: false,
+    }));
+
+    setCards(cardObjects);
     setFlipped([]);
     setMatchedPairs(0);
   };
 
-  const [cards, setCards] = useState([]);
-  console.log("State cards initialized:", cards);
-  const [flipped, setFlipped] = useState([]);
-  console.log("State flipped initialized:", flipped);
-  const [matchedPairs, setMatchedPairs] = useState(0);
-  console.log("State matchedPairs initialized:", matchedPairs);
-
+  // 🧠 Run this once when the component first loads
   useEffect(() => {
-    console.log("useEffect called");
     initializeGame();
   }, []);
 
+  // 🖱 When a card is clicked
   const handleClick = (id) => {
-    console.log("handleClick called with id:", id);
-    if (flipped.length === 2 || flipped.includes(id)) {
-      console.log("Click ignored, either two cards are already flipped or card is already flipped");
-      return;
-    }
+    // Ignore if already flipped or 2 cards are flipped
+    if (flipped.length === 2 || flipped.includes(id)) return;
 
     const newFlipped = [...flipped, id];
-    console.log("New flipped array:", newFlipped);
     setFlipped(newFlipped);
 
+    // If 2 cards are now flipped, check for match
     if (newFlipped.length === 2) {
       const [firstId, secondId] = newFlipped;
-      console.log("Two cards flipped:", firstId, secondId);
       const firstCard = cards[firstId];
       const secondCard = cards[secondId];
-      console.log("First card:", firstCard, "Second card:", secondCard);
 
       if (firstCard.emoji === secondCard.emoji) {
-        console.log("Cards match!");
+        // If match, mark as matched
         const updatedCards = cards.map(card =>
           card.id === firstId || card.id === secondId
             ? { ...card, matched: true }
             : card
         );
-        console.log("Updated cards after match:", updatedCards);
         setCards(updatedCards);
         setMatchedPairs(matchedPairs + 1);
-        console.log("Matched pairs incremented:", matchedPairs + 1);
-      } else {
-        console.log("Cards do not match");
       }
 
+      // After a short delay, reset flipped
       setTimeout(() => {
-        console.log("Resetting flipped cards");
         setFlipped([]);
       }, 1000);
     }
@@ -75,19 +67,21 @@ const MemoryGame = () => {
   return (
     <div className="text-center p-5 font-sans">
       <h1 className="text-2xl font-bold mb-5">😊 Emoji Memory Game ❤️</h1>
+
       <div className="grid grid-cols-4 gap-3">
         {cards.map((card) => (
           <div
             key={card.id}
             onClick={() => handleClick(card.id)}
             className={`w-16 h-16 flex items-center justify-center text-xl cursor-pointer border ${
-              card.flipped || card.matched ? "bg-green-300" : "bg-gray-400"
+              flipped.includes(card.id) || card.matched ? "bg-green-300" : "bg-gray-400"
             }`}
           >
-            {card.flipped || card.matched ? card.emoji : "❓"}
+            {flipped.includes(card.id) || card.matched ? card.emoji : "❓"}
           </div>
         ))}
       </div>
+
       <p className="mt-4">Matched Pairs: {matchedPairs}</p>
     </div>
   );
