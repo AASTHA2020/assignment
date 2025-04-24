@@ -2,33 +2,48 @@ import { useState, useEffect } from 'react';
 import { useGameStore } from '../utils/pointManager';
 
 export default function TicTacToe() {
+    console.log('TicTacToe component rendered');
+
     const [board, setBoard] = useState(Array(4).fill(''));
+    console.log('Initial board state:', board);
+
     const { addWin } = useGameStore();
+    console.log('Game store initialized');
+
     const [winner, setWinner] = useState(false);
+    console.log('Initial winner state:', winner);
+
     const [showPopup, setShowPopup] = useState(false);
+    console.log('Initial popup state:', showPopup);
 
     const handleInputChange = (index, value) => {
+        console.log(`Input changed at index ${index} with value ${value}`);
         const newBoard = [...board];
         newBoard[index] = value;
         setBoard(newBoard);
+        console.log('Updated board state:', newBoard);
 
         if (checkWinner(newBoard)) {
+            console.log('Winner found!');
             setWinner(true);
             setShowPopup(true);
         }
     };
 
     const resetGame = () => {
+        console.log('Resetting game');
         setBoard(Array(4).fill(''));
         setWinner(false);
         setShowPopup(false);
     };
 
     const closePopup = () => {
+        console.log('Closing popup');
         setShowPopup(false);
     };
 
     function checkWinner(board) {
+        console.log('Checking for winner with board:', board);
         const winConditions = [
             [0, 1],
             [0, 2],
@@ -39,10 +54,13 @@ export default function TicTacToe() {
         for (let i = 0; i < winConditions.length; i++) {
             const [x, y] = winConditions[i];
             const sum = (parseInt(board[x]) || 0) + (parseInt(board[y]) || 0);
+            console.log(`Checking condition: [${x}, ${y}] with sum: ${sum}`);
             if (sum === 5) {
+                console.log('Winning condition met:', winConditions[i]);
                 return true;
             }
         }
+        console.log('No winner found');
         return false;
     }
 
